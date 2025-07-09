@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StyleTTS2 - Hebrew TTS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        textarea {
+            height: 120px;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-generate {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-generate:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .result.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .result.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        .phonemes-display {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .audio-player {
+            margin-top: 10px;
+            width: 100%;
+        }
+        .rtl-input {
+            direction: rtl;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="https://phonikud.github.io" target="_blank" style="color: #007bff; text-decoration: none; font-size: 16px;">
+                🔗 See Phonikud Project
+            </a>
+        </div>
+        <h1>StyleTTS2 - Hebrew Text-to-Speech</h1>
+        
+        <div class="form-group">
+            <label for="ref-audio">Reference Audio:</label>
+            <select id="ref-audio" required>
+                {% for audio_file in audio_files %}
+                <option value="{{ audio_file }}" {% if audio_file == "10_michael.wav" %}selected{% endif %}>{{ audio_file }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="unvocalized-input">Unvocalized Hebrew Text:</label>
+            <textarea id="unvocalized-input" class="rtl-input" placeholder="Enter unvocalized Hebrew text..." style="height: 80px;">ירושלים היא עיר עתיקה וחשובה במיוחד, שמכילה בתוכה שכבות רבות של היסטוריה, תרבות ורוחניות שנמשכות אלפי שנים, והיא מהווה מוקד מרכזי לשלוש הדתות הגדולות – יהדות, נצרות ואסלאם – שמתחברות יחד במקום אחד ייחודי, מלא אנרגיה ומורכבות, שם אפשר למצוא אתרים קדושים, שכונות עתיקות ושווקים צבעוניים, וכל פינה מספרת סיפור של תקופות שונות, אנשים שונים ואירועים שהשפיעו על ההיסטוריה של העולם כולו, מה שהופך את ירושלים לא רק לעיר גאוגרפית אלא גם למרכז של זהות, אמונה וזיכרון קולקטיבי שממשיך לעורר השראה ולחבר בין אנשים מרקע שונה מכל קצוות תבל.</textarea>
+            <button class="btn-generate" onclick="generateAudio('unvocalized')" style="margin-top: 10px; width: 100%;">
+                Generate from Unvocalized Text
+            </button>
+        </div>
+        
+        <div class="form-group">
+            <label for="vocalized-input">Vocalized Hebrew Text:</label>
+            <textarea id="vocalized-input" class="rtl-input" placeholder="Enter vocalized Hebrew text..." style="height: 80px;"></textarea>
+            <button class="btn-generate" onclick="generateAudio('vocalized')" style="margin-top: 10px; width: 100%;">
+                Generate from Vocalized Text
+            </button>
+        </div>
+        
+        <div class="form-group">
+            <label for="phonemes-input">Phonemes Input:</label>
+            <textarea id="phonemes-input" placeholder="Enter phonemes directly..." style="height: 80px;"></textarea>
+            <button class="btn-generate" onclick="generateAudio('phonemes')" style="margin-top: 10px; width: 100%;">
+                Generate from Phonemes
+            </button>
+        </div>
+        
+        <div id="result" class="result"></div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666;">
+            <a href="/api/" target="_blank" style="color: #007bff; text-decoration: none; font-size: 14px;">
+                📖 API Documentation (Swagger)
+            </a>
+        </div>
+    </div>
+
+    <script>
+        async function generateAudio(type) {
+            let textInput;
+            if (type === 'phonemes') {
+                textInput = document.getElementById('phonemes-input').value.trim();
+            } else if (type === 'unvocalized') {
+                textInput = document.getElementById('unvocalized-input').value.trim();
+            } else {
+                textInput = document.getElementById('vocalized-input').value.trim();
+            }
+            
+            const refAudio = document.getElementById('ref-audio').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!textInput) {
+                showResult('Please enter some text.', 'error');
+                return;
+            }
+            
+            if (!refAudio) {
+                showResult('Please select a reference audio file.', 'error');
+                return;
+            }
+            
+            // Show loading
+            resultDiv.className = 'result';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Generating audio...</div>';
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: textInput,
+                        type: type,
+                        ref_audio: refAudio
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update the other input fields based on generation
+                    if (type === 'unvocalized' && data.vocalized_text) {
+                        document.getElementById('vocalized-input').value = data.vocalized_text;
+                    }
+                    
+                    if (data.phonemes) {
+                        document.getElementById('phonemes-input').value = data.phonemes;
+                    }
+                    
+                    let html = `
+                        <strong>Success!</strong> Audio generated successfully.
+                        <audio controls class="audio-player" autoplay>
+                            <source src="/audio/${data.filename}" type="audio/wav">
+                            Your browser does not support the audio element.
+                        </audio>
+                    `;
+                    
+                    if (data.phonemes) {
+                        html += `
+                            <div class="phonemes-display">
+                                <strong>Phonemes:</strong><br>
+                                ${data.phonemes}
+                            </div>
+                        `;
+                    }
+                    
+                    showResult(html, 'success');
+                } else {
+                    showResult(`Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showResult(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = message;
+        }
+    </script>
+</body>
+</html> 

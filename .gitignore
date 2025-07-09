@@ -1,0 +1,8 @@
+*.pth
+*.onnx
+__pycache__/
+.venv/
+.DS_Store
+sample_output.wav
+output_unvocalized.wav
+output_*.wav
