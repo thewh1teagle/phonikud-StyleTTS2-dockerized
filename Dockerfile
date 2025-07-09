@@ -1,6 +1,14 @@
 # Use uv base image with Python 3.11
 FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim AS builder
 
+# Install git and build tools for dependencies that need compilation
+RUN apt-get update && apt-get install -y \
+    git \
+    build-essential \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set working directory
 WORKDIR /app
 
