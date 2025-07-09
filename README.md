@@ -1,6 +1,11 @@
 # phonikud-StyleTTS2-dockerized
 
 
+https://github.com/user-attachments/assets/bd6aae78-feb5-4896-923a-4fe77e1b5f61
+
+
+
+
 ## Prepare models
 
 ```console
