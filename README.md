@@ -33,3 +33,5 @@ docker run -p 7860:7860 phonikud-styletts2-app
 ## License
 
 Non commercial (cc-nc)
+
+Trained on data from OpenSLR Dataset 134, released under CC BY-NC-SA 4.0
