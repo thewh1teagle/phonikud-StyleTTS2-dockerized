@@ -29,3 +29,7 @@ wget https://github.com/thewh1teagle/StyleTTS2-lite branch: hebrew2
 docker build --platform linux/amd64 -t phonikud-styletts2-app .
 docker run -p 7860:7860 phonikud-styletts2-app
 ```
+
+## License
+
+Non commercial (cc-nc)
